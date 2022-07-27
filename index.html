@@ -282,6 +282,7 @@
         const share = document.getElementById("share")
         const directions = document.getElementById("directions");
         const modal = document.getElementById("myModal");
+        const clearButton = document.getElementById("clear");
 
         let marker;
         let currentAmenityId = {};
@@ -296,6 +297,9 @@
         })
         share.addEventListener("click", () => {
             modal.style.display = "block";
+        })
+        clearButton.addEventListener("click", () => {
+            clear()
         })
         // When the user clicks anywhere outside of the modal, close it
         window.onclick = function (event) {
@@ -324,6 +328,13 @@
                 })
         }
 
+        function clear() {
+            modalBody.innerText = ``
+            propName.innerText = `Property name`
+            view360.innerHTML = ``
+            if (marker) marker.setMap(null)
+        }
+
         function selectPoint(data) {
             console.log('data!!!', data);
             if (!data) return;
@@ -338,7 +349,7 @@
 
 
             const infowindow = new google.maps.InfoWindow({
-                content: `${property_name}`,
+                content: `${property_name} `,
             });
 
             if (marker) marker.setMap(null)
