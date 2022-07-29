@@ -315,15 +315,20 @@
                 mapTypeControl: false,
             });
 
-            d3.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vR0kpWcop08SCxqGPA44zWLcU7JON-jdDcHf91VifCHhm7XGp4tKKzpR9wnWrEBKdqdbK00y1KVZnvI/pub?output=csv")
+            //d3.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vR0kpWcop08SCxqGPA44zWLcU7JON-jdDcHf91VifCHhm7XGp4tKKzpR9wnWrEBKdqdbK00y1KVZnvI/pub?output=csv")
+            d3.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vQKB32MHPL43CMMiYcRV3vQU4Q3shtdX4As58iNEg8L3oIeDgs58tQP1kKH5_np705hvbAvhkzRgR_E/pub?output=csv")
                 .then(json => {
                     console.log('json', json);
                     autocomplete(input, json);
 
+
                     const url = new URL(document.URL);
                     const pointId = url.searchParams.get('id')
-                    if (pointId && pointId > 0) {
-                        selectPoint(json[pointId])
+                    console.log('pointId', pointId);
+                    if (pointId && pointId !== "") {
+                        const data = json.find(i => i.unique_id === pointId)
+                        console.log('data', data);
+                        selectPoint(data)
                     }
                 })
         }
@@ -372,7 +377,7 @@
             });
 
             const url = new URL(document.URL);
-            modalBody.innerText = url.origin + url.pathname + "?id=" + 48
+            modalBody.innerText = url.origin + url.pathname + "?id=" + data.unique_id
 
             propName.innerText = property_name
 
@@ -502,7 +507,7 @@
 
     </script>
     <script
-        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDSVjMQM3Hgp3upVIWiHSW1CTTP-VFT85A&callback=initMap&libraries=places&v=weekly"
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBmFKYMVih9gm4q0jwK5RptbExaCvJwRho&callback=initMap&libraries=places&v=weekly"
         defer></script>
 </body>
 
