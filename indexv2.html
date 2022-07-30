@@ -325,9 +325,9 @@
         share.addEventListener("click", async () => {
 
             const shareData = {
-                title: 'MDN',
-                text: 'Learn web development on MDN!',
-                url: 'https://developer.mozilla.org'
+                title: '360 view',
+                text: 'Map',
+                url: document.URL
             }
 
             try {
@@ -337,7 +337,7 @@
                 resultPara.textContent = `Error: ${err}`
                 modal.style.display = "block";
             }
-            
+
         })
         clearButton.addEventListener("click", () => {
             clear()
@@ -414,7 +414,7 @@
                 position: center,
                 map,
             });
-            
+
             marker.addListener('mouseover', function () {
                 infowindow.open(map, this);
             });
