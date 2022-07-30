@@ -322,14 +322,7 @@
         closeModal.addEventListener("click", () => {
             modal.style.display = "none";
         })
-        share.addEventListener("click", () => {
-            modal.style.display = "block";
-        })
-        clearButton.addEventListener("click", () => {
-            clear()
-        })
-
-        searchButton.addEventListener("click", async () => {
+        share.addEventListener("click", async () => {
 
             const shareData = {
                 title: 'MDN',
@@ -342,14 +335,21 @@
                 resultPara.textContent = 'MDN shared successfully'
             } catch (err) {
                 resultPara.textContent = `Error: ${err}`
-
-                myInput.style.display = 'flex'
-                myInput.value = '';
-                clearButton.style.display = 'flex'
-                propName.style.display = 'none'
-                searchButton.style.display = 'none'
+                modal.style.display = "block";
             }
+            
+        })
+        clearButton.addEventListener("click", () => {
+            clear()
+        })
 
+        searchButton.addEventListener("click", () => {
+            myInput.style.display = 'flex'
+            myInput.value = '';
+
+            clearButton.style.display = 'flex'
+            propName.style.display = 'none'
+            searchButton.style.display = 'none'
         })
 
         // When the user clicks anywhere outside of the modal, close it
@@ -414,7 +414,7 @@
                 position: center,
                 map,
             });
-
+            
             marker.addListener('mouseover', function () {
                 infowindow.open(map, this);
             });
