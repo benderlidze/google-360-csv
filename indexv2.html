@@ -4,18 +4,43 @@
     <title>Place Autocomplete</title>
     <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
     <meta name="viewport" content="width=device-width,  initial-scale=1">
     <style>
         #map {
-            height: 500px;
+            height: 100%;
             width: 100%;
         }
 
         html,
         body {
-            height: 100%;
             margin: 0;
             padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        header {
+            /* height: 64px; */
+            background: #052b5b;
+            color: white;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px;
+
+        }
+
+        .content {
+            flex: 1;
+            /* this is the key; consumes all available height */
+        }
+
+        footer {
+            flex: 1;
         }
 
         h1 {
@@ -25,7 +50,7 @@
 
         #view360 {
             background-color: #ededed;
-            height: 500px;
+            height: 100%;
             width: 100%;
             display: flex;
             align-items: center;
@@ -33,17 +58,12 @@
             flex-direction: column;
         }
 
-        .main>div {
-            margin: 20px 20px;
-        }
-
         #search {
             width: 100%;
             padding: 10px;
             font-size: 1.5rem;
-
+            cursor: pointer;
         }
-
 
         .button {
             padding: 10px 20px;
@@ -64,11 +84,21 @@
             justify-content: space-between;
         }
 
+        #share,
+        #directions {
+            cursor: pointer;
+            margin: 3px;
+        }
+
+
         /*the container must be positioned relative:*/
         .autocomplete {
             position: relative;
             display: flex;
             z-index: 10;
+            flex: 1;
+            margin: 0px 30px;
+            justify-content: center;
         }
 
         input {
@@ -92,7 +122,7 @@
 
         .autocomplete-items {
             position: absolute;
-            border: 1px solid #d4d4d4;
+            border: 1px solid #757575;
             border-bottom: none;
             border-top: none;
             z-index: 99;
@@ -100,6 +130,7 @@
             top: 100%;
             left: 0;
             right: 0;
+            color: black
         }
 
         .autocomplete-items div {
@@ -125,8 +156,8 @@
             display: flex;
             justify-content: flex-end;
             align-items: center;
-            top: 5px;
-            right: 5px;
+            top: 7px;
+            right: 7px;
         }
 
         .close-x {
@@ -147,89 +178,263 @@
                 linear-gradient(45deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0) 43%, #fff 45%, #fff 55%, rgba(0, 0, 0, 0) 57%, rgba(0, 0, 0, 0) 100%),
                 linear-gradient(135deg, #808080 0%, #808080 43%, #fff 45%, #fff 55%, #808080 57%, #808080 100%);
         }
+
+
+        /* The Modal (background) */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgb(0, 0, 0);
+            background-color: rgba(0, 0, 0, 0.4);
+
+            padding-top: calc(50% + 100px);
+        }
+
+        /* Modal Content */
+        .modal-content {
+            position: relative;
+            background-color: #fefefe;
+            margin: auto;
+            padding: 0;
+            border: 1px solid #888;
+            width: 80%;
+            box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+            -webkit-animation-name: animatetop;
+            -webkit-animation-duration: 0.4s;
+            animation-name: animatetop;
+            animation-duration: 0.4s
+        }
+
+        /* Add Animation */
+        @-webkit-keyframes animatetop {
+            from {
+                top: -300px;
+                opacity: 0
+            }
+
+            to {
+                top: 0;
+                opacity: 1
+            }
+        }
+
+        @keyframes animatetop {
+            from {
+                top: -300px;
+                opacity: 0
+            }
+
+            to {
+                top: 0;
+                opacity: 1
+            }
+        }
+
+        /* The Close Button */
+        .close {
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: #000;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .modal-header {
+            padding: 2px 16px;
+            background-color: #ededed;
+        }
+
+        .modal-body {
+            padding: 10px 16px;
+        }
     </style>
 </head>
 
 <body>
 
-
-    <div class="main">
-        <div id="title">
-            <h1>Property name</h1>
-        </div>
-
-        <div class="autocomplete">
-            <!-- <div id="clear">
-                    <div class="close-x"></div>
-                </div> -->
-            <input id="myInput" class="clearable" type="text" name="myCountry" placeholder="Search by County">
-        </div>
-
-        <!-- <div id="address">
-            <input type="text" id="search">
-        </div> -->
-        <div class="buttons">
-            <div class="button" id="directions">Get Directions</div>
-            <div class="button" id="share">Share</div>
-        </div>
-        <div>
-            <div id="map"></div>
-        </div>
-        <div>
-            <div id="view360">360 view</div>
+    <div id="myModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="close" id="closeModal">&times;</span>
+                <h2>Share link</h2>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
         </div>
     </div>
 
+    <header>
+        <div>
+            <i class="fa fa-bars" style="font-size:30px;"></i>
+        </div>
+        <div class="autocomplete">
+            <h1 id="propName"></h1>
+            <div id="clear">
+                <div class="close-x"></div>
+            </div>
+            <input id="myInput" class="clearable" type="text" name="myCountry" placeholder="Search by County">
+        </div>
+        <div class="buttons">
+            <div id="search" class="fa fa-search" style="font-size:30px;"></div>
+            <div id="directions" class="fa fa-compass" style="font-size:30px;"></div>
+            <div id="share" class="fa fa-share-alt" style="font-size:30px;"></div>
+        </div>
+    </header>
+    <div class="content">
+        <div id="map"></div>
+    </div>
+    <footer>
+        <div id="view360">360 view</div>
+    </footer>
+
     <script>
-
+        const mapStyle = [{ "featureType": "administrative", "elementType": "labels", "stylers": [{ "visibility": "on" }] }, { "featureType": "administrative.locality", "elementType": "all", "stylers": [{ "visibility": "on" }] }, { "featureType": "administrative.locality", "elementType": "geometry", "stylers": [{ "visibility": "off" }] }, { "featureType": "administrative.neighborhood", "elementType": "all", "stylers": [{ "visibility": "off" }] }, { "featureType": "administrative.land_parcel", "elementType": "all", "stylers": [{ "visibility": "off" }] }, { "featureType": "landscape", "elementType": "all", "stylers": [{ "visibility": "on" }] }, { "featureType": "landscape", "elementType": "geometry.fill", "stylers": [{ "visibility": "off" }] }, { "featureType": "landscape", "elementType": "geometry.stroke", "stylers": [{ "visibility": "off" }] }, { "featureType": "landscape.man_made", "elementType": "all", "stylers": [{ "visibility": "off" }] }, { "featureType": "landscape.man_made", "elementType": "labels.text", "stylers": [{ "visibility": "off" }] }, { "featureType": "landscape.natural", "elementType": "geometry", "stylers": [{ "visibility": "on" }] }, { "featureType": "landscape.natural", "elementType": "geometry.fill", "stylers": [{ "visibility": "on" }] }, { "featureType": "landscape.natural", "elementType": "geometry.stroke", "stylers": [{ "visibility": "on" }] }, { "featureType": "landscape.natural.landcover", "elementType": "all", "stylers": [{ "visibility": "on" }] }, { "featureType": "landscape.natural.landcover", "elementType": "geometry", "stylers": [{ "visibility": "on" }] }, { "featureType": "landscape.natural.landcover", "elementType": "labels", "stylers": [{ "visibility": "off" }] }, { "featureType": "landscape.natural.terrain", "elementType": "all", "stylers": [{ "visibility": "on" }] }, { "featureType": "landscape.natural.terrain", "elementType": "geometry", "stylers": [{ "visibility": "on" }] }, { "featureType": "landscape.natural.terrain", "elementType": "geometry.fill", "stylers": [{ "visibility": "on" }] }, { "featureType": "landscape.natural.terrain", "elementType": "geometry.stroke", "stylers": [{ "visibility": "on" }] }, { "featureType": "landscape.natural.terrain", "elementType": "labels", "stylers": [{ "visibility": "off" }] }, { "featureType": "landscape.natural.terrain", "elementType": "labels.text", "stylers": [{ "visibility": "on" }] }, { "featureType": "landscape.natural.terrain", "elementType": "labels.icon", "stylers": [{ "visibility": "on" }] }, { "featureType": "poi", "elementType": "all", "stylers": [{ "visibility": "off" }] }, { "featureType": "road", "elementType": "all", "stylers": [{ "visibility": "on" }] }, { "featureType": "road", "elementType": "labels", "stylers": [{ "visibility": "off" }] }, { "featureType": "road", "elementType": "labels.text", "stylers": [{ "visibility": "on" }] }, { "featureType": "road.arterial", "elementType": "all", "stylers": [{ "visibility": "on" }] }, { "featureType": "road.local", "elementType": "geometry", "stylers": [{ "visibility": "on" }] }, { "featureType": "transit", "elementType": "all", "stylers": [{ "visibility": "off" }] }, { "featureType": "transit.station.airport", "elementType": "all", "stylers": [{ "visibility": "off" }] }, { "featureType": "transit.station.bus", "elementType": "all", "stylers": [{ "visibility": "off" }] }, { "featureType": "transit.station.rail", "elementType": "all", "stylers": [{ "visibility": "off" }] }, { "featureType": "water", "elementType": "all", "stylers": [{ "visibility": "on" }] }, { "featureType": "water", "elementType": "geometry", "stylers": [{ "visibility": "on" }] }, { "featureType": "water", "elementType": "geometry.fill", "stylers": [{ "visibility": "on" }] }, { "featureType": "water", "elementType": "geometry.stroke", "stylers": [{ "visibility": "on" }] }, { "featureType": "water", "elementType": "labels", "stylers": [{ "visibility": "on" }] }, { "featureType": "water", "elementType": "labels.text", "stylers": [{ "visibility": "on" }] }, { "featureType": "water", "elementType": "labels.text.fill", "stylers": [{ "visibility": "on" }] }, { "featureType": "water", "elementType": "labels.text.stroke", "stylers": [{ "visibility": "on" }] }]
         const input = document.getElementById("myInput")
+        const modalBody = document.getElementById("modalBody")
+        const closeModal = document.getElementById("closeModal")
+        const propName = document.getElementById("propName")
+        const view360 = document.getElementById("view360")
+        const share = document.getElementById("share")
+        const directions = document.getElementById("directions");
+        const modal = document.getElementById("myModal");
+        const clearButton = document.getElementById("clear");
+        const searchButton = document.getElementById("search");
+        searchButton.style.display = 'none'
 
+        let marker;
+        let currentAmenityId = {};
 
+        directions.addEventListener("click", () => {
+            if (currentAmenityData && currentAmenityData.g_url !== "") {
+                window.open(currentAmenityData.g_url, '_blank').focus();
+            }
+        })
+        closeModal.addEventListener("click", () => {
+            modal.style.display = "none";
+        })
+        share.addEventListener("click", () => {
+            modal.style.display = "block";
+        })
+        clearButton.addEventListener("click", () => {
+            clear()
+        })
 
+        searchButton.addEventListener("click", async () => {
+
+            const shareData = {
+                title: 'MDN',
+                text: 'Learn web development on MDN!',
+                url: 'https://developer.mozilla.org'
+            }
+
+            try {
+                await navigator.share(shareData)
+                resultPara.textContent = 'MDN shared successfully'
+            } catch (err) {
+                resultPara.textContent = `Error: ${err}`
+
+                myInput.style.display = 'flex'
+                myInput.value = '';
+                clearButton.style.display = 'flex'
+                propName.style.display = 'none'
+                searchButton.style.display = 'none'
+            }
+
+        })
+
+        // When the user clicks anywhere outside of the modal, close it
+        window.onclick = function (event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
 
         function initMap() {
             map = new google.maps.Map(document.getElementById("map"), {
                 center: { lat: 42.24307564695486, lng: -81.71484341302418 },
                 zoom: 8,
                 mapTypeControl: false,
+                styles: mapStyle
             });
 
-            // //create service
-            // const service = new google.maps.places.AutocompleteService();
-            // var request = {
-            //     input: '90006',
-            //     //componentRestrictions: { country: 'au' },
-            // };
-
-            d3.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vR0kpWcop08SCxqGPA44zWLcU7JON-jdDcHf91VifCHhm7XGp4tKKzpR9wnWrEBKdqdbK00y1KVZnvI/pub?output=csv")
+            //d3.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vR0kpWcop08SCxqGPA44zWLcU7JON-jdDcHf91VifCHhm7XGp4tKKzpR9wnWrEBKdqdbK00y1KVZnvI/pub?output=csv")
+            d3.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vQKB32MHPL43CMMiYcRV3vQU4Q3shtdX4As58iNEg8L3oIeDgs58tQP1kKH5_np705hvbAvhkzRgR_E/pub?output=csv")
                 .then(json => {
                     console.log('json', json);
                     autocomplete(input, json);
-                })
 
+                    const url = new URL(document.URL);
+                    const pointId = url.searchParams.get('id')
+                    console.log('pointId', pointId);
+                    if (pointId && pointId !== "") {
+                        const data = json.find(i => i.unique_id === pointId)
+                        console.log('data', data);
+                        selectPoint(data)
+                    }
+                })
+        }
+
+        function clear() {
+            modalBody.innerText = ``
+            propName.innerText = ``
+            view360.innerHTML = ``
+            myInput.value = '';
+            if (marker) marker.setMap(null)
         }
 
         function selectPoint(data) {
-            if (point) {
-                const [Latitude, Longitude] = point['Longitude/Latitude'].split(",")
-                const coords = [+Longitude, +Latitude];
-                const points = turf.point(coords);
+            console.log('data!!!', data);
+            if (!data) return;
 
-                map.flyTo({
-                    center: [+Longitude, +Latitude],
-                    zoom: 9,
-                    // pitch: 50
-                })
+            currentAmenityData = data
 
-                if (popup) popup.remove();
-                popup = new mapboxgl.Popup({
-                    closeOnClick: true,
-                    className: "popup"
-                })
-                    .setLngLat(coords)
-                    .setHTML(description(point))
-                    .addTo(map);
-            }
+            const { latitude, longitude, property_name, pano_url, } = data;
+            const center = { lat: +latitude, lng: +longitude };
+
+            map.setCenter(center)
+            map.setZoom(13)
+
+
+            const infowindow = new google.maps.InfoWindow({
+                content: `${property_name} `,
+            });
+
+            if (marker) marker.setMap(null)
+            marker = new google.maps.Marker({
+                position: center,
+                map,
+            });
+
+            marker.addListener('mouseover', function () {
+                infowindow.open(map, this);
+            });
+            marker.addListener('mouseout', function () {
+                infowindow.close();
+            });
+
+            const url = new URL(document.URL);
+            modalBody.innerText = url.origin + url.pathname + "?id=" + data.unique_id
+
+            propName.style.display = `flex`
+            propName.innerText = property_name
+
+            myInput.style.display = 'none'
+            clearButton.style.display = 'none'
+
+            searchButton.style.display = 'flex'
+
+            //update 360 view
+            view360.innerHTML = `<iframe src="${pano_url}" style="border:none;width:100%;height:100%">360 view</iframe>`
         }
 
         function autocomplete(inp, data, service = undefined) {
@@ -251,27 +456,6 @@
                 /*append the DIV element as a child of the autocomplete container:*/
                 this.parentNode.appendChild(a);
 
-                // service.getPlacePredictions({ input: val }, (res, status) => {
-                //     console.log('res,status', res, status);
-                //     if (status === "ZERO_RESULTS") return;
-
-                //     res.map(json => {
-                //         const search = json.description.toUpperCase().search(val.toUpperCase())
-                //         b = document.createElement("DIV");
-                //         const text = json.description.substr(0, val) + '<b>' + json.description.substr(search, val.length) + '</b>' + json.description.substr((search + val.length), json.description.length)
-                //         b.innerHTML = text
-                //         b.innerHTML += "<img src='images/g_icon.png' style='width:15px;'><input type='hidden' id=" + json.placeId + " value='" + json.description + "'>";
-                //         b.addEventListener("click", function (e) {
-                //             /*insert the value for the autocomplete text field:*/
-                //             inp.value = this.getElementsByTagName("input")[0].value.replaceAll('<br>', ' ');
-                //             const index = this.getElementsByTagName("input")[0].id;
-                //             closeAllLists();
-                //         });
-                //         a.appendChild(b);
-                //     })
-
-                // });
-
                 const arr = data.map((i, key) => {
                     return {
                         index: key,
@@ -285,9 +469,7 @@
                 /*for each item in the array...*/
                 for (i = 0; i < arr.length; i++) {
 
-                    console.log('123', val.toUpperCase(), arr[i].text.toUpperCase().search(val.toUpperCase()));
                     /*check if the item starts with the same letters as the text field value:*/
-                    //if (arr[i].substr(0, val.length).toUpperCase() == val.toUpperCase()) {
 
                     const search = arr[i].text.toUpperCase().search(val.toUpperCase())
                     if (search > -1) {
@@ -308,10 +490,8 @@
                             /*close the list of autocompleted values,
                             (or any other open lists of autocompleted values:*/
                             closeAllLists();
-
                             const point = data[index]
-
-                            console.log('point', point);
+                            selectPoint(point)
 
                         });
                         if (counter > 20) return; // display first 20 results
@@ -379,7 +559,7 @@
 
     </script>
     <script
-        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDSVjMQM3Hgp3upVIWiHSW1CTTP-VFT85A&callback=initMap&libraries=places&v=weekly"
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBmFKYMVih9gm4q0jwK5RptbExaCvJwRho&callback=initMap&libraries=places&v=weekly"
         defer></script>
 </body>
 
