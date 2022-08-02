@@ -321,7 +321,6 @@
                     console.log('json', json);
                     autocomplete(input, json);
 
-
                     const url = new URL(document.URL);
                     const pointId = url.searchParams.get('id')
                     console.log('pointId', pointId);
@@ -330,6 +329,23 @@
                         console.log('data', data);
                         selectPoint(data)
                     }
+
+
+
+                    const markers = json.map(pin => {
+                        const { latitude, longitude, property_name, pano_url, } = data;
+                        const center = { lat: +latitude, lng: +longitude };
+                        const infowindow = new google.maps.InfoWindow({
+                            content: `${property_name} `,
+                        });
+
+                        return new google.maps.Marker({
+                            position: center,
+                            map
+                        });
+                    })
+                    console.log('markers', markers);
+
                 })
         }
 

@@ -6,7 +6,7 @@
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 
-    
+
     <meta name="viewport" content="width=device-width,  initial-scale=1">
     <style>
         #map {
@@ -259,12 +259,70 @@
         .modal-body {
             padding: 10px 16px;
         }
+
+        #menu {
+            cursor: pointer;
+        }
+
+        .sidenav {
+            color: white;
+            height: 100%;
+            width: 0;
+            position: fixed;
+            z-index: 100;
+            top: 0;
+            left: 0;
+            background-color: #052b5b;
+            overflow-x: hidden;
+            transition: 0.5s;
+            padding-top: 60px;
+            text-align: center;
+        }
+
+        .sidenav a {
+            padding: 8px 8px 8px 32px;
+            text-decoration: none;
+            font-size: 25px;
+            color: #818181;
+            display: block;
+            transition: 0.3s;
+
+        }
+
+        .sidenav a:hover {
+            color: #f1f1f1;
+        }
+
+        .sidenav .closebtn {
+            position: absolute;
+            top: 0;
+            right: 25px;
+            font-size: 36px;
+            margin-left: 50px;
+        }
+
+        @media screen and (max-height: 450px) {
+            .sidenav {
+                padding-top: 15px;
+            }
+
+            .sidenav a {
+                font-size: 18px;
+            }
+        }
     </style>
 </head>
 
 <body>
 
-    <div id="myModal" class="modal">
+    <div id="mySidenav" class="sidenav">
+        <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
+        <div id="markerInfo">
+
+        </div>
+    </div>
+
+    <!-- <div id="myModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
                 <span class="close" id="closeModal">&times;</span>
@@ -272,10 +330,10 @@
             </div>
             <div class="modal-body" id="modalBody"></div>
         </div>
-    </div>
+    </div> -->
 
     <header>
-        <div>
+        <div id="menu">
             <i class="fa fa-bars" style="font-size:30px;"></i>
         </div>
         <div class="autocomplete">
@@ -302,7 +360,7 @@
         const mapStyle = [{ "featureType": "administrative", "elementType": "labels", "stylers": [{ "visibility": "on" }] }, { "featureType": "administrative.locality", "elementType": "all", "stylers": [{ "visibility": "on" }] }, { "featureType": "administrative.locality", "elementType": "geometry", "stylers": [{ "visibility": "off" }] }, { "featureType": "administrative.neighborhood", "elementType": "all", "stylers": [{ "visibility": "off" }] }, { "featureType": "administrative.land_parcel", "elementType": "all", "stylers": [{ "visibility": "off" }] }, { "featureType": "landscape", "elementType": "all", "stylers": [{ "visibility": "on" }] }, { "featureType": "landscape", "elementType": "geometry.fill", "stylers": [{ "visibility": "off" }] }, { "featureType": "landscape", "elementType": "geometry.stroke", "stylers": [{ "visibility": "off" }] }, { "featureType": "landscape.man_made", "elementType": "all", "stylers": [{ "visibility": "off" }] }, { "featureType": "landscape.man_made", "elementType": "labels.text", "stylers": [{ "visibility": "off" }] }, { "featureType": "landscape.natural", "elementType": "geometry", "stylers": [{ "visibility": "on" }] }, { "featureType": "landscape.natural", "elementType": "geometry.fill", "stylers": [{ "visibility": "on" }] }, { "featureType": "landscape.natural", "elementType": "geometry.stroke", "stylers": [{ "visibility": "on" }] }, { "featureType": "landscape.natural.landcover", "elementType": "all", "stylers": [{ "visibility": "on" }] }, { "featureType": "landscape.natural.landcover", "elementType": "geometry", "stylers": [{ "visibility": "on" }] }, { "featureType": "landscape.natural.landcover", "elementType": "labels", "stylers": [{ "visibility": "off" }] }, { "featureType": "landscape.natural.terrain", "elementType": "all", "stylers": [{ "visibility": "on" }] }, { "featureType": "landscape.natural.terrain", "elementType": "geometry", "stylers": [{ "visibility": "on" }] }, { "featureType": "landscape.natural.terrain", "elementType": "geometry.fill", "stylers": [{ "visibility": "on" }] }, { "featureType": "landscape.natural.terrain", "elementType": "geometry.stroke", "stylers": [{ "visibility": "on" }] }, { "featureType": "landscape.natural.terrain", "elementType": "labels", "stylers": [{ "visibility": "off" }] }, { "featureType": "landscape.natural.terrain", "elementType": "labels.text", "stylers": [{ "visibility": "on" }] }, { "featureType": "landscape.natural.terrain", "elementType": "labels.icon", "stylers": [{ "visibility": "on" }] }, { "featureType": "poi", "elementType": "all", "stylers": [{ "visibility": "off" }] }, { "featureType": "road", "elementType": "all", "stylers": [{ "visibility": "on" }] }, { "featureType": "road", "elementType": "labels", "stylers": [{ "visibility": "off" }] }, { "featureType": "road", "elementType": "labels.text", "stylers": [{ "visibility": "on" }] }, { "featureType": "road.arterial", "elementType": "all", "stylers": [{ "visibility": "on" }] }, { "featureType": "road.local", "elementType": "geometry", "stylers": [{ "visibility": "on" }] }, { "featureType": "transit", "elementType": "all", "stylers": [{ "visibility": "off" }] }, { "featureType": "transit.station.airport", "elementType": "all", "stylers": [{ "visibility": "off" }] }, { "featureType": "transit.station.bus", "elementType": "all", "stylers": [{ "visibility": "off" }] }, { "featureType": "transit.station.rail", "elementType": "all", "stylers": [{ "visibility": "off" }] }, { "featureType": "water", "elementType": "all", "stylers": [{ "visibility": "on" }] }, { "featureType": "water", "elementType": "geometry", "stylers": [{ "visibility": "on" }] }, { "featureType": "water", "elementType": "geometry.fill", "stylers": [{ "visibility": "on" }] }, { "featureType": "water", "elementType": "geometry.stroke", "stylers": [{ "visibility": "on" }] }, { "featureType": "water", "elementType": "labels", "stylers": [{ "visibility": "on" }] }, { "featureType": "water", "elementType": "labels.text", "stylers": [{ "visibility": "on" }] }, { "featureType": "water", "elementType": "labels.text.fill", "stylers": [{ "visibility": "on" }] }, { "featureType": "water", "elementType": "labels.text.stroke", "stylers": [{ "visibility": "on" }] }]
         const input = document.getElementById("myInput")
         const modalBody = document.getElementById("modalBody")
-        const closeModal = document.getElementById("closeModal")
+        // const closeModal = document.getElementById("closeModal")
         const propName = document.getElementById("propName")
         const view360 = document.getElementById("view360")
         const share = document.getElementById("share")
@@ -310,19 +368,25 @@
         const modal = document.getElementById("myModal");
         const clearButton = document.getElementById("clear");
         const searchButton = document.getElementById("search");
+        const menu = document.getElementById("menu");
+        const markerInfo = document.getElementById("markerInfo");
+        const mySidenav = document.getElementById("mySidenav")
+
         searchButton.style.display = 'none'
 
         let marker;
         let currentAmenityId = {};
+        let info;
+        const allMarkers = [];
 
         directions.addEventListener("click", () => {
             if (currentAmenityData && currentAmenityData.g_url !== "") {
                 window.open(currentAmenityData.g_url, '_blank').focus();
             }
         })
-        closeModal.addEventListener("click", () => {
-            modal.style.display = "none";
-        })
+        // closeModal.addEventListener("click", () => {
+        //     modal.style.display = "none";
+        // })
         share.addEventListener("click", async () => {
 
             const shareData = {
@@ -343,6 +407,14 @@
         clearButton.addEventListener("click", () => {
             clear()
         })
+        menu.addEventListener("click", () => {
+            mySidenav.style.width = "75%";
+        })
+
+        function closeNav() {
+            mySidenav.style.width = "0";
+        }
+
 
         searchButton.addEventListener("click", () => {
             myInput.style.display = 'flex'
@@ -362,8 +434,8 @@
 
         function initMap() {
             map = new google.maps.Map(document.getElementById("map"), {
-                center: { lat: 42.24307564695486, lng: -81.71484341302418 },
-                zoom: 8,
+                center: { lat: 27.571832308256642, lng: -82.554728685242 },
+                zoom: 16,
                 mapTypeControl: false,
                 styles: mapStyle,
                 streetViewControl: false,
@@ -375,14 +447,42 @@
                     console.log('json', json);
                     autocomplete(input, json);
 
+                    const markers = json.map(pin => {
+                        const { latitude, longitude } = pin;
+                        const center = { lat: +latitude, lng: +longitude };
+
+                        const infowindow = new google.maps.InfoWindow();
+
+                        const marker = new google.maps.Marker({
+                            position: center,
+                            map,
+                            data: pin
+                        });
+
+                        marker.addListener('click', function () {
+                            if (info) info.close(); //close previous
+                            const content = updateInfo(marker.data);
+                            info = infowindow
+                            infowindow.setContent(content)
+                            infowindow.open(map, this);
+                            map.setCenter(center)
+                        });
+
+                        return marker
+                    })
+
+                    allMarkers.push(...markers)
+
                     const url = new URL(document.URL);
                     const pointId = url.searchParams.get('id')
-                    console.log('pointId', pointId);
                     if (pointId && pointId !== "") {
                         const data = json.find(i => i.unique_id === pointId)
                         console.log('data', data);
                         selectPoint(data)
                     }
+
+
+                    console.log('markers', markers);
                 })
         }
 
@@ -392,43 +492,38 @@
             view360.innerHTML = ``
             myInput.value = '';
             if (marker) marker.setMap(null)
+            // map.setZoom(10)
         }
 
-        function selectPoint(data) {
+
+        function updateInfo(data) {
+
             console.log('data!!!', data);
             if (!data) return;
 
+            const {
+                descriptor_1,
+                descriptor_2,
+                descriptor_3,
+                g_url,
+                latitude,
+                longitude,
+                management_company,
+                name,
+                pano_url,
+                property_name,
+                property_owner,
+                property_website,
+                unique_id,
+            } = data;
+
             currentAmenityData = data
 
-            const { latitude, longitude, property_name, pano_url, } = data;
-            const center = { lat: +latitude, lng: +longitude };
-
-            map.setCenter(center)
-            map.setZoom(13)
-
-
-            const infowindow = new google.maps.InfoWindow({
-                content: `${property_name} `,
-            });
-
-            if (marker) marker.setMap(null)
-            marker = new google.maps.Marker({
-                position: center,
-                map,
-            });
-
-            marker.addListener('mouseover', function () {
-                infowindow.open(map, this);
-            });
-            marker.addListener('mouseout', function () {
-                infowindow.close();
-            });
-
             const url = new URL(document.URL);
-            modalBody.innerText = url.origin + url.pathname + "?id=" + data.unique_id
+            // modalBody.innerText = url.origin + url.pathname + "?id=" + unique_id
 
             propName.style.display = `flex`
-            propName.innerText = property_name
+            propName.innerText = `${name} ${property_name}`
 
             myInput.style.display = 'none'
             clearButton.style.display = 'none'
@@ -437,6 +532,28 @@
 
             //update 360 view
             view360.innerHTML = `<iframe src="${pano_url}" style="border:none;width:100%;height:100%">360 view</iframe>`
+
+
+            markerInfo.innerHTML = `
+                <h1>${name} ${property_name}</h1>
+                <div class="item">${descriptor_1}</div>
+                <div class="item">${descriptor_2}</div>
+                <div class="item">${descriptor_3}</div>
+                <div class="item">management company: ${management_company}</div>
+                <div class="item">${property_owner}</div>
+                <div class="item"><a target="_blank" href="${property_website}">Webiste</a></div>
+            `
+
+            return `${name} ${property_name} ${unique_id}`
+        }
+
+        function selectPoint(data) {
+            console.log('data!!!', data);
+            if (!data) return;
+
+            const marker = allMarkers.find(pin => pin.data.unique_id === data.unique_id)
+            new google.maps.event.trigger(marker, 'click');
+            map.setZoom(19)
         }
 
         function autocomplete(inp, data, service = undefined) {
