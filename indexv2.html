@@ -6,6 +6,7 @@
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 
+    
     <meta name="viewport" content="width=device-width,  initial-scale=1">
     <style>
         #map {
@@ -282,7 +283,7 @@
             <div id="clear">
                 <div class="close-x"></div>
             </div>
-            <input id="myInput" class="clearable" type="text" name="myCountry" placeholder="Search by County">
+            <input id="myInput" class="clearable" type="text" name="myCountry" placeholder="Tap to Search">
         </div>
         <div class="buttons">
             <div id="search" class="fa fa-search" style="font-size:30px;"></div>
@@ -364,7 +365,8 @@
                 center: { lat: 42.24307564695486, lng: -81.71484341302418 },
                 zoom: 8,
                 mapTypeControl: false,
-                styles: mapStyle
+                styles: mapStyle,
+                streetViewControl: false,
             });
 
             //d3.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vR0kpWcop08SCxqGPA44zWLcU7JON-jdDcHf91VifCHhm7XGp4tKKzpR9wnWrEBKdqdbK00y1KVZnvI/pub?output=csv")
@@ -559,7 +561,7 @@
 
     </script>
     <script
-        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBmFKYMVih9gm4q0jwK5RptbExaCvJwRho&callback=initMap&libraries=places&v=weekly"
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBzfMl1G0OrMw6cdVydIA4vxiGFmX9P-TI&callback=initMap&libraries=places&v=weekly"
         defer></script>
 </body>
 
