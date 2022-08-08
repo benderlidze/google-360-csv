@@ -5,7 +5,15 @@
     <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <!-- <script
+        src="https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js"></script> -->
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/markerclustererplus/2.1.4/markerclusterer.js"></script>
+
+    <!-- <link rel="stylesheet" type="text/css" href="semantic/semantic.min.css">
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js"
+        integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
+    <script src="semantic/semantic.min.js"></script> -->
 
     <meta name="viewport" content="width=device-width,  initial-scale=1">
     <style>
@@ -310,6 +318,12 @@
                 font-size: 18px;
             }
         }
+
+
+        .marker-label {
+            margin-top: 50px;
+
+        }
     </style>
 </head>
 
@@ -374,6 +388,8 @@
 
         searchButton.style.display = 'none'
 
+        let singleView = false;
+        let markerCluster;
         let marker;
         let currentAmenityId = {};
         let info;
@@ -453,10 +469,36 @@
 
                         const infowindow = new google.maps.InfoWindow();
 
+
+                        // var icon = {
+                        //     path: `M13.04,41.77c-0.11-1.29-0.35-3.2-0.99-5.42c-0.91-3.17-4.74-9.54-5.49-10.79c-3.64-6.1-5.46-9.21-5.45-12.07
+                        //         c0.03-4.57,2.77-7.72,3.21-8.22c0.52-0.58,4.12-4.47,9.8-4.17c4.73,0.24,7.67,3.23,8.45,4.07c0.47,0.51,3.22,3.61,3.31,8.11
+                        //         c0.06,3.01-1.89,6.26-5.78,12.77c-0.18,0.3-4.15,6.95-5.1,10.26c-0.64,2.24-0.89,4.17-1,5.48C13.68,41.78,13.36,41.78,13.04,41.77z
+                        //         `,
+                        //     fillColor: '#0084ff',
+                        //     fillOpacity: 1,
+                        //     strokeColor: '#ffffff',
+                        //     strokeWeight: 1,
+                        //     anchor: new google.maps.Point(14, 43),
+                        //     labelOrigin: new google.maps.Point(13.5, 15)
+                        // }
+
+                        const image =
+                            "images/parking-icon-30.png";
+
                         const marker = new google.maps.Marker({
                             position: center,
-                            map,
-                            data: pin
+                            data: pin,
+                            icon: {
+                                url: image,
+                                // labelOrigin: new google.maps.Point(0, 0)
+                            },
+                            label: {
+                                text: pin.name,
+                                color: '#000',
+                                fontSize: '11px',
+                                className: 'marker-label',
+                            }
                         });
 
                         marker.addListener('click', function () {
@@ -473,18 +515,73 @@
 
                     allMarkers.push(...markers)
 
+                    const image = 'images/svgviewer-png-output.png'
+                    var clusterStyles = [
+                        {
+                            textColor: 'white',
+                            url: image,
+                            height: 42,
+                            width: 42
+                        },
+                        {
+                            textColor: 'white',
+                            url: image,
+                            height: 42,
+                            width: 42
+                        },
+                        {
+                            textColor: 'white',
+                            url: image,
+                            height: 42,
+                            width: 42
+                        }
+                    ];
+
+                    // markerCluster = new MarkerClusterer(map, markers, {
+                    //     gridSize: 70,
+                    //     minimumClusterSize: 3,
+                    //     styles: clusterStyles,
+                    // });
+                    markerCluster = new MarkerClusterer(map, allMarkers, { ignoreHidden: true });
+
+
                     const url = new URL(document.URL);
                     const pointId = url.searchParams.get('id')
+
                     if (pointId && pointId !== "") {
                         const data = json.find(i => i.unique_id === pointId)
-                        console.log('data', data);
+                        markerCluster.markers_.forEach(pin => {
+                            if (pin.data.unique_id === pointId) {
+                                pin.setVisible(true)
+                            } else {
+                                pin.setVisible(false)
+                            }
+                        })
+                        markerCluster.repaint();
                         selectPoint(data)
+                        singleView = true
+                    } else {
+                        markerCluster = new MarkerClusterer(map, markers);
                     }
-
 
                     console.log('markers', markers);
                 })
+
+            map.addListener("zoom_changed", () => {
+
+                if (singleView) {
+                    markerCluster.markers_.forEach(pin => {
+                        pin.setVisible(true)
+                    })
+                    markerCluster.repaint();
+                    singleView = false;
+                }
+
+            });
+
         }
+
+
 
         function clear() {
             modalBody.innerText = ``
@@ -535,7 +632,8 @@
 
 
             markerInfo.innerHTML = `
-                <h1>${name} ${property_name}</h1>
+                <img src="images/The-Tides-RV-Resort-Logo.png">
+                <h1 style="margin:50px 0px;">${name} ${property_name}</h1>
                 <div class="item">${descriptor_1}</div>
                 <div class="item">${descriptor_2}</div>
                 <div class="item">${descriptor_3}</div>
@@ -553,7 +651,7 @@
 
             const marker = allMarkers.find(pin => pin.data.unique_id === data.unique_id)
             new google.maps.event.trigger(marker, 'click');
-            map.setZoom(19)
+            map.setZoom(18)
         }
 
         function autocomplete(inp, data, service = undefined) {
