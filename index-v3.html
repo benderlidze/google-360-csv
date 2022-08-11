@@ -451,7 +451,7 @@
         function initMap() {
             map = new google.maps.Map(document.getElementById("map"), {
                 center: { lat: 27.571832308256642, lng: -82.554728685242 },
-                zoom: 16,
+                zoom: 18,
                 mapTypeControl: false,
                 styles: mapStyle,
                 streetViewControl: false,
@@ -536,27 +536,29 @@
 
                     if (pointId && pointId !== "") {
                         const data = json.find(i => i.unique_id === pointId)
-                        allMarkers.forEach(pin => {
+                        markerCluster.markers_.forEach(pin => {
                             if (pin.data.unique_id === pointId) {
                                 pin.setVisible(true)
                             } else {
                                 pin.setVisible(false)
                             }
                         })
+                        markerCluster.repaint();
                         selectPoint(data)
-                        singleView = true
+
                     }
 
-                    console.log('markers', markers);
-
-                    rebuildmarkers()
+                    // rebuildmarkers()
                 })
 
             map.addListener("idle", () => {
-                rebuildmarkers()
+                console.log('idle');
+                if (markerCluster) rebuildmarkers()
             })
             map.addListener("zoom_changed", () => {
+                console.log('zoom',);
                 rebuildmarkers()
+                singleView = true
             });
 
         }
@@ -565,7 +567,7 @@
             //resize marker size 
             const zoom = map.getZoom()
             if (zoom <= 16) {
-                allMarkers.forEach(marker => {
+                markerCluster.markers_.forEach(marker => {
                     marker.setLabel("")
                     marker.setIcon({
                         url: "images/parking-icon-30.png",
@@ -573,7 +575,7 @@
                     })
                 })
             } else if (zoom === 17) {
-                allMarkers.forEach(marker => {
+                markerCluster.markers_.forEach(marker => {
                     marker.setLabel("")
                     marker.setIcon({
                         url: "images/parking-icon-30.png",
@@ -581,7 +583,7 @@
                     })
                 })
             } else if (zoom === 18) {
-                allMarkers.forEach(marker => {
+                markerCluster.markers_.forEach(marker => {
                     marker.setLabel("")
                     marker.setIcon({
                         url: "images/parking-icon-30.png",
@@ -590,7 +592,7 @@
                 })
             }
             else {
-                allMarkers.forEach(marker => {
+                markerCluster.markers_.forEach(marker => {
                     const props = {
                         text: marker.data.name,
                         color: '#000',
@@ -604,6 +606,7 @@
                     })
                 })
             }
+
             if (singleView) {
                 markerCluster.markers_.forEach(pin => {
                     pin.setVisible(true)
@@ -679,9 +682,9 @@
             console.log('data!!!', data);
             if (!data) return;
 
-            const marker = allMarkers.find(pin => pin.data.unique_id === data.unique_id)
+            const marker = markerCluster.markers_.find(pin => pin.data.unique_id === data.unique_id)
             new google.maps.event.trigger(marker, 'click');
-            map.setZoom(18)
+            //map.setZoom(18)
         }
 
         function autocomplete(inp, data, service = undefined) {
