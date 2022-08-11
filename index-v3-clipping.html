@@ -1,0 +1,828 @@
+<html>
+
+<head>
+    <title>Place Autocomplete</title>
+    <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <!-- <script
+        src="https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js"></script> -->
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/markerclustererplus/2.1.4/markerclusterer.js"></script>
+
+    <!-- <link rel="stylesheet" type="text/css" href="semantic/semantic.min.css">
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js"
+        integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
+    <script src="semantic/semantic.min.js"></script> -->
+
+    <meta name="viewport" content="width=device-width,  initial-scale=1">
+    <style>
+        #map {
+            height: 100%;
+            width: 100%;
+        }
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        header {
+            /* height: 64px; */
+            background: #052b5b;
+            color: white;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px;
+
+        }
+
+        .content {
+            flex: 1;
+            /* this is the key; consumes all available height */
+        }
+
+        footer {
+            flex: 1;
+        }
+
+        h1 {
+            padding: 0px;
+            margin: 0px;
+        }
+
+        #view360 {
+            background-color: #ededed;
+            height: 100%;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        #search {
+            width: 100%;
+            padding: 10px;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .button {
+            padding: 10px 20px;
+            width: 48%;
+            display: flex;
+            justify-content: center;
+            /* margin: 0 10px; */
+            cursor: pointer;
+            border-radius: 5px;
+            background-color: #ededed;
+            box-sizing: border-box;
+            text-transform: uppercase;
+        }
+
+        .buttons {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        #share,
+        #directions {
+            cursor: pointer;
+            margin: 3px;
+        }
+
+
+        /*the container must be positioned relative:*/
+        .autocomplete {
+            position: relative;
+            display: flex;
+            z-index: 10;
+            flex: 1;
+            margin: 0px 30px;
+            justify-content: center;
+        }
+
+        input {
+            border: 2px solid gray;
+            background-color: #f1f1f1;
+            padding: 10px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        input[type=text] {
+            background-color: #f1f1f1;
+            width: 100%;
+        }
+
+        input[type=submit] {
+            background-color: DodgerBlue;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        .autocomplete-items {
+            position: absolute;
+            border: 1px solid #757575;
+            border-bottom: none;
+            border-top: none;
+            z-index: 99;
+            /*position the autocomplete items to be the same width as the container:*/
+            top: 100%;
+            left: 0;
+            right: 0;
+            color: black
+        }
+
+        .autocomplete-items div {
+            padding: 10px;
+            cursor: pointer;
+            background-color: #fff;
+            border-bottom: 1px solid #d4d4d4;
+        }
+
+        /*when hovering an item:*/
+        .autocomplete-items div:hover {
+            background-color: #e9e9e9;
+        }
+
+        /*when navigating through the items using the arrow keys:*/
+        .autocomplete-active {
+            background-color: DodgerBlue !important;
+            color: #ffffff;
+        }
+
+        #clear {
+            position: absolute;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            top: 7px;
+            right: 7px;
+        }
+
+        .close-x {
+            display: inline-block;
+            width: 15px;
+            height: 15px;
+            border: 7px solid #a1a1a1;
+            border-radius: 20px;
+            cursor: pointer;
+            background:
+                linear-gradient(45deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0) 43%, #fff 45%, #fff 55%, rgba(0, 0, 0, 0) 57%, rgba(0, 0, 0, 0) 100%),
+                linear-gradient(135deg, #a1a1a1 0%, #a1a1a1 43%, #fff 45%, #fff 55%, #a1a1a1 57%, #a1a1a1 100%);
+        }
+
+        .close-x:hover {
+            border: 7px solid #808080;
+            background:
+                linear-gradient(45deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0) 43%, #fff 45%, #fff 55%, rgba(0, 0, 0, 0) 57%, rgba(0, 0, 0, 0) 100%),
+                linear-gradient(135deg, #808080 0%, #808080 43%, #fff 45%, #fff 55%, #808080 57%, #808080 100%);
+        }
+
+
+        /* The Modal (background) */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgb(0, 0, 0);
+            background-color: rgba(0, 0, 0, 0.4);
+
+            padding-top: calc(50% + 100px);
+        }
+
+        /* Modal Content */
+        .modal-content {
+            position: relative;
+            background-color: #fefefe;
+            margin: auto;
+            padding: 0;
+            border: 1px solid #888;
+            width: 80%;
+            box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+            -webkit-animation-name: animatetop;
+            -webkit-animation-duration: 0.4s;
+            animation-name: animatetop;
+            animation-duration: 0.4s
+        }
+
+        /* Add Animation */
+        @-webkit-keyframes animatetop {
+            from {
+                top: -300px;
+                opacity: 0
+            }
+
+            to {
+                top: 0;
+                opacity: 1
+            }
+        }
+
+        @keyframes animatetop {
+            from {
+                top: -300px;
+                opacity: 0
+            }
+
+            to {
+                top: 0;
+                opacity: 1
+            }
+        }
+
+        /* The Close Button */
+        .close {
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: #000;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .modal-header {
+            padding: 2px 16px;
+            background-color: #ededed;
+        }
+
+        .modal-body {
+            padding: 10px 16px;
+        }
+
+        #menu {
+            cursor: pointer;
+        }
+
+        .sidenav {
+            color: white;
+            height: 100%;
+            width: 0;
+            position: fixed;
+            z-index: 100;
+            top: 0;
+            left: 0;
+            background-color: #052b5b;
+            overflow-x: hidden;
+            transition: 0.5s;
+            padding-top: 60px;
+            text-align: center;
+        }
+
+        .sidenav a {
+            padding: 8px 8px 8px 32px;
+            text-decoration: none;
+            font-size: 25px;
+            color: #818181;
+            display: block;
+            transition: 0.3s;
+
+        }
+
+        .sidenav a:hover {
+            color: #f1f1f1;
+        }
+
+        .sidenav .closebtn {
+            position: absolute;
+            top: 0;
+            right: 25px;
+            font-size: 36px;
+            margin-left: 50px;
+        }
+
+        @media screen and (max-height: 450px) {
+            .sidenav {
+                padding-top: 15px;
+            }
+
+            .sidenav a {
+                font-size: 18px;
+            }
+        }
+
+
+        .marker-label {
+            margin-top: 50px;
+
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="mySidenav" class="sidenav">
+        <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
+        <div id="markerInfo">
+
+        </div>
+    </div>
+
+    <!-- <div id="myModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="close" id="closeModal">&times;</span>
+                <h2>Share link</h2>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+        </div>
+    </div> -->
+
+    <header>
+        <div id="menu">
+            <i class="fa fa-bars" style="font-size:30px;"></i>
+        </div>
+        <div class="autocomplete">
+            <h1 id="propName"></h1>
+            <div id="clear">
+                <div class="close-x"></div>
+            </div>
+            <input id="myInput" class="clearable" type="text" name="myCountry" placeholder="Tap to Search">
+        </div>
+        <div class="buttons">
+            <div id="search" class="fa fa-search" style="font-size:30px;"></div>
+            <div id="directions" class="fa fa-compass" style="font-size:30px;"></div>
+            <div id="share" class="fa fa-share-alt" style="font-size:30px;"></div>
+        </div>
+    </header>
+    <div class="content">
+        <div id="map"></div>
+    </div>
+    <footer>
+        <div id="view360">360 view</div>
+    </footer>
+
+    <script>
+        const mapStyle = [{ "featureType": "administrative", "elementType": "labels", "stylers": [{ "visibility": "on" }] }, { "featureType": "administrative.locality", "elementType": "all", "stylers": [{ "visibility": "on" }] }, { "featureType": "administrative.locality", "elementType": "geometry", "stylers": [{ "visibility": "off" }] }, { "featureType": "administrative.neighborhood", "elementType": "all", "stylers": [{ "visibility": "off" }] }, { "featureType": "administrative.land_parcel", "elementType": "all", "stylers": [{ "visibility": "off" }] }, { "featureType": "landscape", "elementType": "all", "stylers": [{ "visibility": "on" }] }, { "featureType": "landscape", "elementType": "geometry.fill", "stylers": [{ "visibility": "off" }] }, { "featureType": "landscape", "elementType": "geometry.stroke", "stylers": [{ "visibility": "off" }] }, { "featureType": "landscape.man_made", "elementType": "all", "stylers": [{ "visibility": "off" }] }, { "featureType": "landscape.man_made", "elementType": "labels.text", "stylers": [{ "visibility": "off" }] }, { "featureType": "landscape.natural", "elementType": "geometry", "stylers": [{ "visibility": "on" }] }, { "featureType": "landscape.natural", "elementType": "geometry.fill", "stylers": [{ "visibility": "on" }] }, { "featureType": "landscape.natural", "elementType": "geometry.stroke", "stylers": [{ "visibility": "on" }] }, { "featureType": "landscape.natural.landcover", "elementType": "all", "stylers": [{ "visibility": "on" }] }, { "featureType": "landscape.natural.landcover", "elementType": "geometry", "stylers": [{ "visibility": "on" }] }, { "featureType": "landscape.natural.landcover", "elementType": "labels", "stylers": [{ "visibility": "off" }] }, { "featureType": "landscape.natural.terrain", "elementType": "all", "stylers": [{ "visibility": "on" }] }, { "featureType": "landscape.natural.terrain", "elementType": "geometry", "stylers": [{ "visibility": "on" }] }, { "featureType": "landscape.natural.terrain", "elementType": "geometry.fill", "stylers": [{ "visibility": "on" }] }, { "featureType": "landscape.natural.terrain", "elementType": "geometry.stroke", "stylers": [{ "visibility": "on" }] }, { "featureType": "landscape.natural.terrain", "elementType": "labels", "stylers": [{ "visibility": "off" }] }, { "featureType": "landscape.natural.terrain", "elementType": "labels.text", "stylers": [{ "visibility": "on" }] }, { "featureType": "landscape.natural.terrain", "elementType": "labels.icon", "stylers": [{ "visibility": "on" }] }, { "featureType": "poi", "elementType": "all", "stylers": [{ "visibility": "off" }] }, { "featureType": "road", "elementType": "all", "stylers": [{ "visibility": "on" }] }, { "featureType": "road", "elementType": "labels", "stylers": [{ "visibility": "off" }] }, { "featureType": "road", "elementType": "labels.text", "stylers": [{ "visibility": "on" }] }, { "featureType": "road.arterial", "elementType": "all", "stylers": [{ "visibility": "on" }] }, { "featureType": "road.local", "elementType": "geometry", "stylers": [{ "visibility": "on" }] }, { "featureType": "transit", "elementType": "all", "stylers": [{ "visibility": "off" }] }, { "featureType": "transit.station.airport", "elementType": "all", "stylers": [{ "visibility": "off" }] }, { "featureType": "transit.station.bus", "elementType": "all", "stylers": [{ "visibility": "off" }] }, { "featureType": "transit.station.rail", "elementType": "all", "stylers": [{ "visibility": "off" }] }, { "featureType": "water", "elementType": "all", "stylers": [{ "visibility": "on" }] }, { "featureType": "water", "elementType": "geometry", "stylers": [{ "visibility": "on" }] }, { "featureType": "water", "elementType": "geometry.fill", "stylers": [{ "visibility": "on" }] }, { "featureType": "water", "elementType": "geometry.stroke", "stylers": [{ "visibility": "on" }] }, { "featureType": "water", "elementType": "labels", "stylers": [{ "visibility": "on" }] }, { "featureType": "water", "elementType": "labels.text", "stylers": [{ "visibility": "on" }] }, { "featureType": "water", "elementType": "labels.text.fill", "stylers": [{ "visibility": "on" }] }, { "featureType": "water", "elementType": "labels.text.stroke", "stylers": [{ "visibility": "on" }] }]
+        const input = document.getElementById("myInput")
+        const modalBody = document.getElementById("modalBody")
+        // const closeModal = document.getElementById("closeModal")
+        const propName = document.getElementById("propName")
+        const view360 = document.getElementById("view360")
+        const share = document.getElementById("share")
+        const directions = document.getElementById("directions");
+        const modal = document.getElementById("myModal");
+        const clearButton = document.getElementById("clear");
+        const searchButton = document.getElementById("search");
+        const menu = document.getElementById("menu");
+        const markerInfo = document.getElementById("markerInfo");
+        const mySidenav = document.getElementById("mySidenav")
+
+        searchButton.style.display = 'none'
+
+        let singleView = false;
+        let markerCluster;
+        let marker;
+        let currentAmenityId = {};
+        let info;
+        const allMarkers = [];
+
+        directions.addEventListener("click", () => {
+            if (currentAmenityData && currentAmenityData.g_url !== "") {
+                window.open(currentAmenityData.g_url, '_blank').focus();
+            }
+        })
+        // closeModal.addEventListener("click", () => {
+        //     modal.style.display = "none";
+        // })
+        share.addEventListener("click", async () => {
+
+            const shareData = {
+                title: '360 view',
+                text: 'Map',
+                url: document.URL
+            }
+
+            try {
+                await navigator.share(shareData)
+                resultPara.textContent = 'MDN shared successfully'
+            } catch (err) {
+                resultPara.textContent = `Error: ${err}`
+                modal.style.display = "block";
+            }
+
+        })
+        clearButton.addEventListener("click", () => {
+            clear()
+        })
+        menu.addEventListener("click", () => {
+            mySidenav.style.width = "75%";
+        })
+
+        function closeNav() {
+            mySidenav.style.width = "0";
+        }
+
+
+        searchButton.addEventListener("click", () => {
+            myInput.style.display = 'flex'
+            myInput.value = '';
+
+            clearButton.style.display = 'flex'
+            propName.style.display = 'none'
+            searchButton.style.display = 'none'
+        })
+
+        // When the user clicks anywhere outside of the modal, close it
+        window.onclick = function (event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+
+        function initMap() {
+            map = new google.maps.Map(document.getElementById("map"), {
+                center: { lat: 27.571832308256642, lng: -82.554728685242 },
+                zoom: 16,
+                mapTypeControl: false,
+                styles: mapStyle,
+                streetViewControl: false,
+            });
+
+            //d3.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vR0kpWcop08SCxqGPA44zWLcU7JON-jdDcHf91VifCHhm7XGp4tKKzpR9wnWrEBKdqdbK00y1KVZnvI/pub?output=csv")
+            d3.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vQKB32MHPL43CMMiYcRV3vQU4Q3shtdX4As58iNEg8L3oIeDgs58tQP1kKH5_np705hvbAvhkzRgR_E/pub?output=csv")
+                .then(json => {
+                    console.log('json', json);
+                    autocomplete(input, json);
+
+                    const markers = json.map(pin => {
+                        const { latitude, longitude } = pin;
+                        const center = { lat: +latitude, lng: +longitude };
+                        const infowindow = new google.maps.InfoWindow();
+
+                        const marker = new google.maps.Marker({
+                            position: center,
+                            data: pin,
+                            icon: {
+                                url: "images/parking-icon-30.png",
+                            },
+                            label: {
+                                text: pin.name,
+                                color: '#000',
+                                fontSize: '11px',
+                                className: 'marker-label',
+                            },
+                        });
+
+                        marker.addListener('click', function () {
+                            if (info) info.close(); //close previous
+                            const content = updateInfo(marker.data);
+                            info = infowindow
+                            infowindow.setContent(content)
+                            infowindow.open(map, this);
+                            map.setCenter(center)
+                        });
+
+                        return marker
+                    })
+
+                    allMarkers.push(...markers)
+
+
+                    const image = 'images/svgviewer-png-output.png'
+                    var clusterStyles = [
+                        {
+                            textColor: 'white',
+                            url: image,
+                            height: 42,
+                            width: 42
+                        },
+                        {
+                            textColor: 'white',
+                            url: image,
+                            height: 42,
+                            width: 42
+                        },
+                        {
+                            textColor: 'white',
+                            url: image,
+                            height: 42,
+                            width: 42
+                        }
+                    ];
+
+                    // markerCluster = new MarkerClusterer(map, markers, {
+                    //     gridSize: 70,
+                    //     minimumClusterSize: 3,
+                    //     styles: clusterStyles,
+                    // });
+                    //markerCluster = new MarkerClusterer(map, allMarkers, { ignoreHidden: true });
+                    markerCluster = new MarkerClusterer(map, allMarkers, {
+                        ignoreHidden: false,
+                        gridSize: 1,
+                        maxZoom: 1
+                    });
+
+                    const url = new URL(document.URL);
+                    const pointId = url.searchParams.get('id')
+
+                    if (pointId && pointId !== "") {
+                        const data = json.find(i => i.unique_id === pointId)
+                        allMarkers.forEach(pin => {
+                            if (pin.data.unique_id === pointId) {
+                                pin.setVisible(true)
+                            } else {
+                                pin.setVisible(false)
+                            }
+                        })
+                        selectPoint(data)
+                        singleView = true
+                    }
+
+                    console.log('markers', markers);
+
+                    rebuildmarkers()
+                })
+
+            map.addListener("idle", () => {
+                rebuildmarkers()
+                checkVisibleElements(allMarkers);
+            })
+            map.addListener("zoom_changed", () => {
+                rebuildmarkers()
+            });
+
+        }
+
+        function checkVisibleElements(elementsArray) {
+            var bounds = map.getBounds();
+            //checks if marker is within viewport and displays the marker accordingly - triggered by google.maps.event "idle" on the map Object
+            elementsArray.forEach(function (item) {
+                //If the item is within the the bounds of the viewport
+                if (bounds.contains(item.position)) {
+                    //If the item isn't already being displayed
+                    item.setMap(map);
+                } else {
+                    item.setMap(null);
+                }
+            });
+        }
+
+        function rebuildmarkers() {
+            //resize marker size 
+            const zoom = map.getZoom()
+            if (zoom <= 16) {
+                allMarkers.forEach(marker => {
+                    marker.setLabel("")
+                    marker.setIcon({
+                        url: "images/parking-icon-30.png",
+                        scaledSize: new google.maps.Size(5, 5), // scaled size
+                    })
+                })
+            } else if (zoom === 17) {
+                allMarkers.forEach(marker => {
+                    marker.setLabel("")
+                    marker.setIcon({
+                        url: "images/parking-icon-30.png",
+                        scaledSize: new google.maps.Size(15, 15), // scaled size
+                    })
+                })
+            } else if (zoom === 18) {
+                allMarkers.forEach(marker => {
+                    marker.setLabel("")
+                    marker.setIcon({
+                        url: "images/parking-icon-30.png",
+                        scaledSize: new google.maps.Size(20, 20), // scaled size
+                    })
+                })
+            }
+            else {
+                allMarkers.forEach(marker => {
+                    const props = {
+                        text: marker.data.name,
+                        color: '#000',
+                        fontSize: '11px',
+                        className: 'marker-label',
+                    }
+                    marker.setLabel(props)
+                    marker.setIcon({
+                        url: "images/parking-icon-30.png",
+                        scaledSize: new google.maps.Size(30, 30), // scaled size
+                    })
+                })
+            }
+            if (singleView) {
+                markerCluster.markers_.forEach(pin => {
+                    pin.setVisible(true)
+                })
+                markerCluster.repaint();
+                singleView = false;
+            }
+        }
+
+        function clear() {
+            modalBody.innerText = ``
+            propName.innerText = ``
+            view360.innerHTML = ``
+            myInput.value = '';
+            if (marker) marker.setMap(null)
+            // map.setZoom(10)
+        }
+
+
+        function updateInfo(data) {
+
+            console.log('data!!!', data);
+            if (!data) return;
+
+            const {
+                descriptor_1,
+                descriptor_2,
+                descriptor_3,
+                g_url,
+                latitude,
+                longitude,
+                management_company,
+                name,
+                pano_url,
+                property_name,
+                property_owner,
+                property_website,
+                unique_id,
+            } = data;
+
+            currentAmenityData = data
+
+            const url = new URL(document.URL);
+            // modalBody.innerText = url.origin + url.pathname + "?id=" + unique_id
+
+            propName.style.display = `flex`
+            propName.innerText = `${name} ${property_name}`
+
+            myInput.style.display = 'none'
+            clearButton.style.display = 'none'
+
+            searchButton.style.display = 'flex'
+
+            //update 360 view
+            view360.innerHTML = `<iframe src="${pano_url}" style="border:none;width:100%;height:100%">360 view</iframe>`
+
+
+            markerInfo.innerHTML = `
+                <img src="images/The-Tides-RV-Resort-Logo.png">
+                <h1 style="margin:50px 0px;">${name} ${property_name}</h1>
+                <div class="item">${descriptor_1}</div>
+                <div class="item">${descriptor_2}</div>
+                <div class="item">${descriptor_3}</div>
+                <div class="item">management company: ${management_company}</div>
+                <div class="item">${property_owner}</div>
+                <div class="item"><a target="_blank" href="${property_website}">Webiste</a></div>
+            `
+
+            return `${name} ${property_name} ${unique_id}`
+        }
+
+        function selectPoint(data) {
+            console.log('data!!!', data);
+            if (!data) return;
+
+            const marker = allMarkers.find(pin => pin.data.unique_id === data.unique_id)
+            new google.maps.event.trigger(marker, 'click');
+            map.setZoom(18)
+        }
+
+        function autocomplete(inp, data, service = undefined) {
+            /*the autocomplete function takes two arguments,
+                        the text field element and an array of possible autocompleted values:*/
+            var currentFocus;
+            /*execute a function when someone writes in the text field:*/
+
+            inp.addEventListener("input", function (e) {
+                var a, b, i, val = this.value;
+                /*close any already open lists of autocompleted values*/
+                closeAllLists();
+                if (!val) { return false; }
+                currentFocus = -1;
+                /*create a DIV element that will contain the items (values):*/
+                a = document.createElement("DIV");
+                a.setAttribute("id", this.id + "autocomplete-list");
+                a.setAttribute("class", "autocomplete-items");
+                /*append the DIV element as a child of the autocomplete container:*/
+                this.parentNode.appendChild(a);
+
+                const arr = data.map((i, key) => {
+                    return {
+                        index: key,
+                        text: `${i.name} ${i.property_name}`
+                    }
+                })
+
+
+                let counter = 0;
+
+                /*for each item in the array...*/
+                for (i = 0; i < arr.length; i++) {
+
+                    /*check if the item starts with the same letters as the text field value:*/
+
+                    const search = arr[i].text.toUpperCase().search(val.toUpperCase())
+                    if (search > -1) {
+                        /*create a DIV element for each matching element:*/
+                        b = document.createElement("DIV");
+                        /*make the matching letters bold:*/
+
+                        const text = arr[i].text.substr(0, search) + '<b>' + arr[i].text.substr(search, val.length) + '</b>' + arr[i].text.substr((search + val.length), arr[i].text.length)
+
+                        b.innerHTML = text
+                        /*insert a input field that will hold the current array item's value:*/
+                        b.innerHTML += "<input type='hidden' id=" + arr[i].index + " value='" + arr[i].text + "'>";
+                        /*execute a function when someone clicks on the item value (DIV element):*/
+                        b.addEventListener("click", function (e) {
+                            /*insert the value for the autocomplete text field:*/
+                            inp.value = this.getElementsByTagName("input")[0].value.replaceAll('<br>', ' ');
+                            const index = this.getElementsByTagName("input")[0].id;
+                            /*close the list of autocompleted values,
+                            (or any other open lists of autocompleted values:*/
+                            closeAllLists();
+                            const point = data[index]
+                            selectPoint(point)
+
+                        });
+                        if (counter > 20) return; // display first 20 results
+                        a.appendChild(b);
+                        counter++;
+                    }
+                }
+            });
+            /*execute a function presses a key on the keyboard:*/
+            inp.addEventListener("keydown", function (e) {
+                var x = document.getElementById(this.id + "autocomplete-list");
+                if (x) x = x.getElementsByTagName("div");
+                if (e.keyCode == 40) {
+                    /*If the arrow DOWN key is pressed,
+                    increase the currentFocus variable:*/
+                    currentFocus++;
+                    /*and and make the current item more visible:*/
+                    addActive(x);
+                } else if (e.keyCode == 38) { //up
+                    /*If the arrow UP key is pressed,
+                    decrease the currentFocus variable:*/
+                    currentFocus--;
+                    /*and and make the current item more visible:*/
+                    addActive(x);
+                } else if (e.keyCode == 13) {
+                    /*If the ENTER key is pressed, prevent the form from being submitted,*/
+                    e.preventDefault();
+                    if (currentFocus > -1) {
+                        /*and simulate a click on the "active" item:*/
+                        if (x) x[currentFocus].click();
+                    }
+                }
+            });
+            function addActive(x) {
+                /*a function to classify an item as "active":*/
+                if (!x) return false;
+                /*start by removing the "active" class on all items:*/
+                removeActive(x);
+                if (currentFocus >= x.length) currentFocus = 0;
+                if (currentFocus < 0) currentFocus = (x.length - 1);
+                /*add class "autocomplete-active":*/
+                x[currentFocus].classList.add("autocomplete-active");
+            }
+            function removeActive(x) {
+                /*a function to remove the "active" class from all autocomplete items:*/
+                for (var i = 0; i < x.length; i++) {
+                    x[i].classList.remove("autocomplete-active");
+                }
+            }
+            function closeAllLists(elmnt) {
+                /*close all autocomplete lists in the document,
+                            except the one passed as an argument:*/
+                var x = document.getElementsByClassName("autocomplete-items");
+                for (var i = 0; i < x.length; i++) {
+                    if (elmnt != x[i] && elmnt != inp) {
+                        x[i].parentNode.removeChild(x[i]);
+                    }
+                }
+            }
+            /*execute a function when someone clicks in the document:*/
+            document.addEventListener("click", function (e) {
+                closeAllLists(e.target);
+            });
+        }
+
+    </script>
+    <script
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBzfMl1G0OrMw6cdVydIA4vxiGFmX9P-TI&callback=initMap&libraries=places"
+        defer></script>
+</body>
+
+</html>
