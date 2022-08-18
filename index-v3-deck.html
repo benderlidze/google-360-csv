@@ -326,6 +326,16 @@
             margin-top: 50px;
 
         }
+
+        #zoom {
+            position: absolute;
+            top: 50px;
+            left: 20px;
+            width: 100px;
+            background-color: #e9e9e9;
+            color: #000;
+            z-index: 10000;
+        }
     </style>
 </head>
 
@@ -349,6 +359,8 @@
     </div> -->
 
     <header>
+
+        <div id="zoom"></div>
         <div id="menu">
             <i class="fa fa-bars" style="font-size:30px;"></i>
         </div>
@@ -374,6 +386,7 @@
 
     <script>
         const mapStyle = [{ "featureType": "administrative", "elementType": "labels", "stylers": [{ "visibility": "on" }] }, { "featureType": "administrative.locality", "elementType": "all", "stylers": [{ "visibility": "on" }] }, { "featureType": "administrative.locality", "elementType": "geometry", "stylers": [{ "visibility": "off" }] }, { "featureType": "administrative.neighborhood", "elementType": "all", "stylers": [{ "visibility": "off" }] }, { "featureType": "administrative.land_parcel", "elementType": "all", "stylers": [{ "visibility": "off" }] }, { "featureType": "landscape", "elementType": "all", "stylers": [{ "visibility": "on" }] }, { "featureType": "landscape", "elementType": "geometry.fill", "stylers": [{ "visibility": "off" }] }, { "featureType": "landscape", "elementType": "geometry.stroke", "stylers": [{ "visibility": "off" }] }, { "featureType": "landscape.man_made", "elementType": "all", "stylers": [{ "visibility": "off" }] }, { "featureType": "landscape.man_made", "elementType": "labels.text", "stylers": [{ "visibility": "off" }] }, { "featureType": "landscape.natural", "elementType": "geometry", "stylers": [{ "visibility": "on" }] }, { "featureType": "landscape.natural", "elementType": "geometry.fill", "stylers": [{ "visibility": "on" }] }, { "featureType": "landscape.natural", "elementType": "geometry.stroke", "stylers": [{ "visibility": "on" }] }, { "featureType": "landscape.natural.landcover", "elementType": "all", "stylers": [{ "visibility": "on" }] }, { "featureType": "landscape.natural.landcover", "elementType": "geometry", "stylers": [{ "visibility": "on" }] }, { "featureType": "landscape.natural.landcover", "elementType": "labels", "stylers": [{ "visibility": "off" }] }, { "featureType": "landscape.natural.terrain", "elementType": "all", "stylers": [{ "visibility": "on" }] }, { "featureType": "landscape.natural.terrain", "elementType": "geometry", "stylers": [{ "visibility": "on" }] }, { "featureType": "landscape.natural.terrain", "elementType": "geometry.fill", "stylers": [{ "visibility": "on" }] }, { "featureType": "landscape.natural.terrain", "elementType": "geometry.stroke", "stylers": [{ "visibility": "on" }] }, { "featureType": "landscape.natural.terrain", "elementType": "labels", "stylers": [{ "visibility": "off" }] }, { "featureType": "landscape.natural.terrain", "elementType": "labels.text", "stylers": [{ "visibility": "on" }] }, { "featureType": "landscape.natural.terrain", "elementType": "labels.icon", "stylers": [{ "visibility": "on" }] }, { "featureType": "poi", "elementType": "all", "stylers": [{ "visibility": "off" }] }, { "featureType": "road", "elementType": "all", "stylers": [{ "visibility": "on" }] }, { "featureType": "road", "elementType": "labels", "stylers": [{ "visibility": "off" }] }, { "featureType": "road", "elementType": "labels.text", "stylers": [{ "visibility": "on" }] }, { "featureType": "road.arterial", "elementType": "all", "stylers": [{ "visibility": "on" }] }, { "featureType": "road.local", "elementType": "geometry", "stylers": [{ "visibility": "on" }] }, { "featureType": "transit", "elementType": "all", "stylers": [{ "visibility": "off" }] }, { "featureType": "transit.station.airport", "elementType": "all", "stylers": [{ "visibility": "off" }] }, { "featureType": "transit.station.bus", "elementType": "all", "stylers": [{ "visibility": "off" }] }, { "featureType": "transit.station.rail", "elementType": "all", "stylers": [{ "visibility": "off" }] }, { "featureType": "water", "elementType": "all", "stylers": [{ "visibility": "on" }] }, { "featureType": "water", "elementType": "geometry", "stylers": [{ "visibility": "on" }] }, { "featureType": "water", "elementType": "geometry.fill", "stylers": [{ "visibility": "on" }] }, { "featureType": "water", "elementType": "geometry.stroke", "stylers": [{ "visibility": "on" }] }, { "featureType": "water", "elementType": "labels", "stylers": [{ "visibility": "on" }] }, { "featureType": "water", "elementType": "labels.text", "stylers": [{ "visibility": "on" }] }, { "featureType": "water", "elementType": "labels.text.fill", "stylers": [{ "visibility": "on" }] }, { "featureType": "water", "elementType": "labels.text.stroke", "stylers": [{ "visibility": "on" }] }]
+        const zoomDiv = document.getElementById("zoom")
         const input = document.getElementById("myInput")
         const modalBody = document.getElementById("modalBody")
         // const closeModal = document.getElementById("closeModal")
@@ -387,6 +400,9 @@
         const menu = document.getElementById("menu");
         const markerInfo = document.getElementById("markerInfo");
         const mySidenav = document.getElementById("mySidenav")
+
+        const DATA = []
+        const deckOverlay = new deck.GoogleMapsOverlay();
 
         searchButton.style.display = 'none'
 
@@ -458,47 +474,11 @@
                 styles: mapStyle,
                 streetViewControl: false,
             });
+            deckOverlay.setMap(map)
 
-            //d3.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vR0kpWcop08SCxqGPA44zWLcU7JON-jdDcHf91VifCHhm7XGp4tKKzpR9wnWrEBKdqdbK00y1KVZnvI/pub?output=csv")
             d3.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vQKB32MHPL43CMMiYcRV3vQU4Q3shtdX4As58iNEg8L3oIeDgs58tQP1kKH5_np705hvbAvhkzRgR_E/pub?output=csv")
                 .then(json => {
-                    console.log('json', json);
                     autocomplete(input, json);
-
-                    // const markers = json.map(pin => {
-                    //     const { latitude, longitude } = pin;
-                    //     const center = { lat: +latitude, lng: +longitude };
-                    //     const infowindow = new google.maps.InfoWindow();
-
-                    //     const marker = new google.maps.Marker({
-                    //         position: center,
-                    //         data: pin,
-                    //         map,
-                    //         visible: false
-                    //     });
-
-                    //     marker.addListener('click', function () {
-                    //         if (info) info.close(); //close previous
-                    //         const content = updateInfo(marker.data);
-                    //         info = infowindow
-                    //         infowindow.setContent(content)
-                    //         infowindow.open(map, this);
-                    //         map.setCenter(center)
-                    //     });
-
-                    //     return marker
-                    // })
-
-                    // allMarkers.push(...markers)
-
-
-                    const url = new URL(document.URL);
-                    const pointId = url.searchParams.get('id')
-
-                    if (pointId && pointId !== "") {
-                        const data = json.find(i => i.unique_id === pointId)
-                    }
-
 
                     const data = json.map(pin => {
                         const { latitude, longitude } = pin;
@@ -511,70 +491,118 @@
                     })
 
                     let isHovering = false;
+                    DATA.push(...data)
 
-                    const deckOverlay = new deck.GoogleMapsOverlay({
-                        layers: [
-                            new deck.IconLayer({
-                                id: 'icon',
-                                data: data,
-                                pickable: true,
-                                getPosition: d => d.coordinates,
-                                getIcon: d => 'marker',
-                                iconMapping: {
-                                    marker: { x: 0, y: 0, width: 30, height: 30, }
-                                    // ... you can set different mappings and use them by key at getIcon function
-                                },
-                                iconAtlas: "images/parking-icon-30w.png",
-                                sizeMinPixels: 30,
-                                onHover: ({ object }) => {
-                                    isHovering = object !== undefined
-                                    console.log('isHovering', isHovering);
-                                    return isHovering
-                                },
-                                onClick: (obj) => {
+                    console.log('data', data);
 
-                                    const [lng, lat] = obj.object.coordinates;
-                                    if (info) info.close(); //close previous
-                                    info = new google.maps.InfoWindow({
-                                        position: { lat: +lat, lng: +lng },
-                                        content: updateInfo(obj.object)
-                                    })
-                                    info.setMap(map)
-                                }
-                            }),
-                            new deck.TextLayer({
-                                id: 'text-layer',
-                                data: data,
-                                pickable: true,
-                                getPosition: d => d.coordinates,
-                                getText: d => d.name,
-                                getSize: 11,
-                                getColor: [0, 0, 0],
-                                getTextAnchor: 'middle',
-                                getAlignmentBaseline: 'center',
-                                fontFamily: "Arial",
-                                // fontSettings:{
-                                //     sdf: true,
-                                //     smoothing: 1
-                                // }
-                                getPixelOffset: [0, 25],
-                            })
-                        ],
-
-                    });
-                    deckOverlay.setMap(map);
+                    const url = new URL(document.URL);
+                    const pointId = url.searchParams.get('id')
+                    const filteredData = (pointId && pointId !== "") ? data.filter(i => i.unique_id === pointId) : data
+                    console.log('filteredData', filteredData);
+                    renderDeck(filteredData)
                 })
 
-            // map.addListener("idle", () => {
-            //     console.log('idle');
-            //     if (markerCluster) rebuildmarkers()
-            // })
-            // map.addListener("zoom_changed", () => {
-            //     console.log('zoom',);
-            //     rebuildmarkers()
-            //     singleView = true
-            // });
+            map.addListener("zoom_changed", () => {
+                console.log('zoom',);
+                zoomDiv.innerHTML = map.getZoom()
+                renderDeck(DATA)
+            });
 
+        }
+
+        function renderDeck(data) {
+
+            if (data.length === 1) {
+                const center = { lat: +data[0].latitude, lng: +data[0].longitude };
+                map.setCenter(center)
+                map.setZoom(18)
+            }
+
+            const zoomLevels = {
+                18: {
+                    labelsOn: false,
+                    iconSize: 20
+                },
+                19: {
+                    labelsOn: false,
+                    iconSize: 30
+                },
+                20: {
+                    labelsOn: true,
+                    iconSize: 30
+                },
+                21: {
+                    labelsOn: true,
+                    iconSize: 30
+                },
+                22: {
+                    labelsOn: true,
+                    iconSize: 30
+                },
+                default: {
+                    labelsOn: false,
+                    iconSize: 5
+                },
+            }
+
+            const zoom = map.getZoom()
+            const { labelsOn, iconSize } = (zoomLevels.hasOwnProperty(zoom)) ? zoomLevels[zoom] : zoomLevels['default']
+
+            const iconLayer = {
+                id: 'icon',
+                data: data,
+                visible: true,
+                pickable: true,
+                getPosition: d => d.coordinates,
+                getIcon: d => 'marker',
+                iconMapping: {
+                    marker: { x: 0, y: 0, width: 30, height: 30, }
+                    // ... you can set different mappings and use them by key at getIcon function
+                },
+                iconAtlas: "images/parking-icon-30w.png",
+                sizeMinPixels: iconSize,
+                onHover: ({ object }) => {
+                    isHovering = object !== undefined
+                    console.log('isHovering', isHovering);
+                    return isHovering
+                },
+                onClick: (obj) => {
+
+                    const [lng, lat] = obj.object.coordinates;
+                    if (info) info.close(); //close previous
+                    info = new google.maps.InfoWindow({
+                        position: { lat: +lat, lng: +lng },
+                        content: updateInfo(obj.object)
+                    })
+                    info.setMap(map)
+                }
+            }
+
+            const textLayer = {
+                id: 'text-layer',
+                data: data,
+                pickable: true,
+                getPosition: d => d.coordinates,
+                getText: d => d.name,
+                getSize: 11,
+                getColor: [0, 0, 0],
+                getTextAnchor: 'middle',
+                getAlignmentBaseline: 'center',
+                fontFamily: "Arial",
+                visible: labelsOn,
+                // fontSettings:{
+                //     sdf: true,
+                //     smoothing: 1
+                // }
+                getPixelOffset: [0, 25],
+            }
+
+            deckOverlay.setProps({
+                layers: [
+                    new deck.IconLayer(iconLayer),
+                    new deck.TextLayer(textLayer),
+                ]
+            });
         }
 
         function clear() {
